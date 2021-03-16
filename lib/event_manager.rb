@@ -1,6 +1,13 @@
 require 'csv'
-require 'google/apis/civicinfo_v2'
+require 'date'
 require 'erb'
+require 'google/apis/civicinfo_v2'
+
+DATE_PARSE = "%m/%d/%y %k:%M"
+reg_hour = Hash.new(0)
+reg_day = Hash.new(0)
+active_hours = []
+active_days = []
 
 def clean_zipcode(zipcode)
   zipcode.to_s.rjust(5, '0')[0..4]
@@ -12,7 +19,7 @@ def clean_phone_number(phone_number)
   length = phone_number.length
 
   if length == 10 || (length == 11 && phone_number[0] == '1')
-    phone_number[-10..-1] 
+    phone_number[-10..-1]
   else
     'bad phone number'
   end
@@ -56,6 +63,12 @@ erb_template = ERB.new template_letter
 
 contents.each do |row|
   id = row[0]
+
+  day_time = DateTime.strptime(row[:regdate], DATE_PARSE)
+  day = day_time.strftime("%A")
+  reg_hour[day_time.hour] += 1
+  reg_day[day_time.wday] += 1
+
   name = row[:first_name]
 
   zipcode = clean_zipcode(row[:zipcode])
@@ -68,3 +81,9 @@ contents.each do |row|
 
   save_thank_you_letter(id, form_letter)
 end
+
+reg_hour.each { |k, v| active_hours << k if v == reg_hour.values.max }
+reg_day.each { |k, v| active_days << k if v == reg_day.values.max }
+
+puts "The most common registration #{(active_hours.length == 1 ? 'hour is ' : 'hours are ') + active_hours.join(' and ')}."
+puts "The most common registration #{(active_days.length == 1 ? 'day is ' : 'days are ') + active_days.join(' and ')}."
