@@ -1,9 +1,11 @@
+# frozen_string_literal: true
+
 require 'csv'
 require 'date'
 require 'erb'
 require 'google/apis/civicinfo_v2'
 
-DATE_PARSE = "%m/%d/%y %k:%M"
+DATE_PARSE = '%m/%d/%y %k:%M'
 reg_hour = Hash.new(0)
 reg_day = Hash.new(0)
 active_hours = []
@@ -30,18 +32,18 @@ def legislators_by_zipcode(zip)
   civic_info.key = 'AIzaSyClRzDqDh5MsXwnCWi0kOiiBivP6JsSyBw'
 
   begin
-    legislators = civic_info.representative_info_by_address(
+    civic_info.representative_info_by_address(
       address: zip,
       levels: 'country',
-      roles: ['legislatorUpperBody', 'legislatorLowerBody']
+      roles: %w[legislatorUpperBody legislatorLowerBody]
     ).officials
-  rescue
+  rescue StandardError
     'You can find your representatives by visiting www.commoncause.org/take-action/find-elected-officials'
   end
 end
 
 def save_thank_you_letter(id, form_letter)
-  Dir.mkdir('output') unless Dir.exists?('output')
+  Dir.mkdir('output') unless Dir.exist?('output')
 
   filename = "output/thanks_#{id}.html"
 
@@ -65,7 +67,7 @@ contents.each do |row|
   id = row[0]
 
   day_time = DateTime.strptime(row[:regdate], DATE_PARSE)
-  day = day_time.strftime("%A")
+  day = day_time.strftime('%A')
   reg_hour[day_time.hour] += 1
   reg_day[day_time.wday] += 1
 
